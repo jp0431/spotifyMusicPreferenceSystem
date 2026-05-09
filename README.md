@@ -1,7 +1,7 @@
 # 🎧 Music Preference Intelligence System
 Utilizando como base mi proyecto anterior, un dasboard de mi escucha en Spotify, He creado un sistema inteligente de preferencia músical.
 # 🚀 Demo
-
+https://spotifymusicpreferencesystem-dgxidexcyvnirklerfduam.streamlit.app
 # 📊 ¿Qué muestra?
 El proyecto esta divido en 3 paginas, 1 Dashboard, 2 Analisis de los grupos de musica y 3 sistema de predicción de Skips.
 ## Dashboard
