@@ -2,7 +2,11 @@ import streamlit as st
 import pandas as pd
 import joblib
 import plotly.express as px
-
+st.set_page_config(
+    page_title="Music Cluster",
+    page_icon="🤖",
+    layout="wide"
+)
 df = pd.read_csv("Data/song_ml.csv")
 kmeans = joblib.load("Models/kmeans.pkl")
 scaler = joblib.load("Models/scaler_cl.pkl")
