@@ -3,7 +3,7 @@ import pandas as pd
 import  joblib
 import datetime as dt
 import plotly.express as px
-
+import plotly.graph_objects as go
 sl.set_page_config(
     page_title="AI Music Predictor",
     page_icon="🤖",
@@ -15,6 +15,7 @@ sl.set_page_config(
 songs_df = pd.read_csv("Data/song_ml.csv")
 songs_df["has_features"] = songs_df["energy"].notna()
 songs_df = songs_df[songs_df["has_features"] == True]
+
 modelo = joblib.load("Models/predict_skip.pkl")
 scaler = joblib.load("Models/scaler_skip.pkl")
 features = [
@@ -49,16 +50,24 @@ Predeice si escucharé una canción completa, basado en:
 """
 )
 sl.divider()
-sel_song = sl.selectbox(
-    "🎵 Selecciona una canción: ",
-    songs_df["query"].unique()
-)
-if sl.button("Analiza canción"):
-    song_df = songs_df[songs_df["query"] == sel_song].drop_duplicates(subset="query")[features]
+col1, col2 = sl.columns([4,1])
+with col1:
+    
+    sel_song = sl.selectbox(
+        "🎵 Selecciona una canción: ",
+        songs_df["query"].unique()
+    )
+with col2:
+    analyze = sl.button("Analiza canción 🎧")   
+if analyze:
+    song_base = songs_df[songs_df["query"] == sel_song].drop_duplicates(subset="query")
+    song_df =song_base.copy()
     song_df["hour"] = dt.datetime.now().hour #Obtenemos la hora actual
     song_df["month"] = dt.datetime.now().month #Obtenemos el mes actual
+    print(song_df[["query", "cluster"]])
     cluster = int(song_df["cluster"].iloc[0])
-    Scaler_song_df= scaler.transform(song_df)
+    X = song_df[features]
+    Scaler_song_df= scaler.transform(X)
     prediction = modelo.predict(Scaler_song_df)
     skip_proba = modelo.predict_proba(Scaler_song_df)[0][1]
     listen_prob = 1-skip_proba
@@ -85,7 +94,7 @@ if sl.button("Analiza canción"):
             dict_cluster.get(cluster, "Desconocido")
         )  
     sl.divider()
-    sl.subheader("🎚️ Audio Features")
+    sl.subheader("🎚️ Perfil Musical")
 
     feature_df = pd.DataFrame({
         "Feature": [
@@ -104,18 +113,52 @@ if sl.button("Analiza canción"):
         ]
     })
 
-    fig = px.bar(
-        feature_df,
-        x="Feature",
-        y="Value",
-        template="plotly_dark",
-        title="Spotify Audio Features"
-    )
+    fig = go.Figure()
 
+    fig.add_trace(go.Scatterpolar(
+
+        r=[
+            song_df["danceability"].iloc[0],
+            song_df["energy"].iloc[0],
+            song_df["valence"].iloc[0],
+            song_df["acousticness"].iloc[0],
+            song_df["tempo"].iloc[0] / 200
+        ],
+
+        theta=[
+            "Danceability",
+            "Energy",
+            "Valence",
+            "Acousticness",
+            "Tempo"
+        ],
+
+        fill='toself',
+        name='Song Profile'
+))
+    fig.update_layout(
+
+    template="plotly_dark",
+
+    polar=dict(
+        radialaxis=dict(
+            visible=True,
+            range=[0,1]
+        )
+    ),
+
+    showlegend=False
+)
     sl.plotly_chart(fig, use_container_width=True)
     sl.subheader("🤖 ¿Porque de esta predicción?")
 
     insights = []
+    user_profile = songs_df[[
+        "danceability",
+        "energy",
+        "valence",
+        "acousticness"
+    ]].mean()
 
     if song_df["energy"].iloc[0] > 0.7:
         insights.append("⚡ Las canciones más energicas son las que más escucho")
@@ -132,3 +175,16 @@ if sl.button("Analiza canción"):
     for insight in insights:
         sl.write(insight)
 
+    sl.subheader("🎵 Canciones similares que disfruto")
+
+    similar_songs = songs_df[
+        songs_df["cluster"] == cluster
+    ][[
+        "trackName",
+        "artistName"
+    ]].drop_duplicates().sample(5)
+
+    sl.dataframe(
+        similar_songs,
+        use_container_width=True
+    )
