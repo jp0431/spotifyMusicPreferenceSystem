@@ -4,5 +4,5 @@ numpy
 plotly
 ipywidgets
 joblib
-sklearn
+scikit-learn
 datetime
