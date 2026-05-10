@@ -13,6 +13,8 @@ sl.set_page_config(
 
 
 songs_df = pd.read_csv("Data/song_ml.csv")
+songs_df["has_features"] = songs_df["energy"].notna()
+songs_df = songs_df[songs_df["has_features"] == True]
 modelo = joblib.load("Models/predict_skip.pkl")
 scaler = joblib.load("Models/scaler_skip.pkl")
 features = [
